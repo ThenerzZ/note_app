@@ -140,6 +140,8 @@ TOOL_BUTTON_STYLE = f"""
         font-weight: 600;
         font-family: 'SF Pro Display', 'Segoe UI', Arial, sans-serif;
         padding: 4px;
+        min-width: 32px;
+        min-height: 32px;
     }}
     QToolButton:hover {{
         background-color: {COLORS['button_hover']};
@@ -150,6 +152,9 @@ TOOL_BUTTON_STYLE = f"""
     QToolButton:checked {{
         background-color: {COLORS['button_checked']};
         color: {COLORS['text_light']};
+    }}
+    QToolButton:disabled {{
+        color: {COLORS['metadata_text']};
     }}
 """
 
@@ -209,20 +214,21 @@ SPLITTER_STYLE = f"""
 # Combobox style
 COMBOBOX_STYLE = f"""
     QComboBox {{
-        padding: 8px 15px;
+        padding: 5px 10px;
         border: none;
         border-radius: 6px;
         background-color: {COLORS['background_darker']};
         color: {COLORS['text_light']};
-        min-width: 150px;
+        min-width: 60px;
+        font-size: 10pt;
     }}
     QComboBox:hover {{
         background-color: {COLORS['hover_dark']};
     }}
-    QComboBox:on {{
+    QComboBox:focus {{
         background-color: {COLORS['hover_dark']};
         border: 2px solid {COLORS['pink_primary']};
-        padding: 6px 13px;
+        padding: 3px 8px;
     }}
     QComboBox::drop-down {{
         border: none;
@@ -230,9 +236,9 @@ COMBOBOX_STYLE = f"""
     }}
     QComboBox::down-arrow {{
         image: none;
-        border-left: 5px solid transparent;
-        border-right: 5px solid transparent;
-        border-top: 5px solid {COLORS['text_light']};
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 4px solid {COLORS['text_light']};
         margin-right: 8px;
     }}
     QComboBox QAbstractItemView {{
@@ -241,7 +247,15 @@ COMBOBOX_STYLE = f"""
         border-radius: 6px;
         selection-background-color: {COLORS['pink_dark']};
         selection-color: {COLORS['text_light']};
-        padding: 5px;
+        padding: 4px;
+    }}
+    QComboBox QLineEdit {{
+        background-color: transparent;
+        border: none;
+        padding: 0;
+        color: {COLORS['text_light']};
+        selection-background-color: {COLORS['pink_dark']};
+        selection-color: {COLORS['text_light']};
     }}
 """
 
@@ -319,5 +333,15 @@ SEPARATOR_STYLE = f"""
         background-color: {COLORS['separator']};
         width: 1px;
         margin: 4px 8px;
+    }}
+"""
+
+# Toolbar label style
+TOOLBAR_LABEL_STYLE = f"""
+    QLabel {{
+        color: {COLORS['text_light']};
+        font-weight: 500;
+        font-size: 10pt;
+        margin-right: 2px;
     }}
 """ 

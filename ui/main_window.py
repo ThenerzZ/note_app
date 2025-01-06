@@ -9,6 +9,38 @@ from PySide6.QtGui import (QIcon, QFont, QKeySequence, QTextCharFormat,
                         QTextListFormat, QTextBlockFormat)
 from .styles import *
 
+# Preset font sizes that match common text editors
+FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
+
+class FontSizeComboBox(QComboBox):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setEditable(True)
+        self.setInsertPolicy(QComboBox.NoInsert)
+        self.setStyleSheet(COMBOBOX_STYLE)
+        self.setFixedWidth(70)
+        
+        # Add preset sizes
+        for size in FONT_SIZES:
+            self.addItem(str(size))
+        
+        # Set default size
+        self.setCurrentText("11")
+        
+        # Connect signals
+        self.currentTextChanged.connect(self.validate_size)
+        
+    def validate_size(self, text):
+        try:
+            size = int(text)
+            if size < 1:
+                self.setCurrentText("1")
+            elif size > 72:
+                self.setCurrentText("72")
+        except ValueError:
+            # If invalid input, revert to previous valid size
+            self.setCurrentText("11")
+
 class RichTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -97,6 +129,17 @@ class MainWindow(QMainWindow):
         underline_shortcut.setShortcut(QKeySequence.Underline)
         underline_shortcut.triggered.connect(lambda: self.format_text('underline'))
         self.addAction(underline_shortcut)
+
+        # Add font size shortcuts
+        increase_size = QAction("Increase Font Size", self)
+        increase_size.setShortcut(QKeySequence("Ctrl++"))
+        increase_size.triggered.connect(self.increase_font_size)
+        self.addAction(increase_size)
+
+        decrease_size = QAction("Decrease Font Size", self)
+        decrease_size.setShortcut(QKeySequence("Ctrl+-"))
+        decrease_size.triggered.connect(self.decrease_font_size)
+        self.addAction(decrease_size)
 
     def setup_ui(self):
         self.setStyleSheet(MAIN_WINDOW_STYLE)
@@ -188,20 +231,43 @@ class MainWindow(QMainWindow):
         style_layout.setSpacing(4)
 
         # Font controls
+        font_controls = QWidget()
+        font_layout = QHBoxLayout(font_controls)
+        font_layout.setContentsMargins(0, 0, 0, 0)
+        font_layout.setSpacing(4)
+
+        # Font family with label
+        font_label = QLabel("Font:")
+        font_label.setStyleSheet(TOOLBAR_LABEL_STYLE)
         self.font_family = QFontComboBox()
         self.font_family.setStyleSheet(COMBOBOX_STYLE)
         self.font_family.currentFontChanged.connect(self.format_font)
         self.font_family.setFixedWidth(180)
         
-        self.font_size = QSpinBox()
-        self.font_size.setStyleSheet(SPINBOX_STYLE)
-        self.font_size.setRange(8, 72)
-        self.font_size.setValue(11)
-        self.font_size.valueChanged.connect(self.format_font)
-        self.font_size.setFixedWidth(70)
+        # Font size with label
+        size_label = QLabel("Size:")
+        size_label.setStyleSheet(TOOLBAR_LABEL_STYLE)
+        self.font_size = FontSizeComboBox()
+        self.font_size.currentTextChanged.connect(self.format_font_size)
+        
+        # Add decrease/increase font size buttons
+        self.btn_decrease_size = FormatToolButton("Decrease size", "A-", "Decrease font size (Ctrl+-)")
+        self.btn_decrease_size.setCheckable(False)
+        self.btn_increase_size = FormatToolButton("Increase size", "A+", "Increase font size (Ctrl++)")
+        self.btn_increase_size.setCheckable(False)
+        
+        self.btn_decrease_size.clicked.connect(self.decrease_font_size)
+        self.btn_increase_size.clicked.connect(self.increase_font_size)
 
-        style_layout.addWidget(self.font_family)
-        style_layout.addWidget(self.font_size)
+        font_layout.addWidget(font_label)
+        font_layout.addWidget(self.font_family)
+        font_layout.addSpacing(10)
+        font_layout.addWidget(size_label)
+        font_layout.addWidget(self.font_size)
+        font_layout.addWidget(self.btn_decrease_size)
+        font_layout.addWidget(self.btn_increase_size)
+        
+        style_layout.addWidget(font_controls)
         format_layout.addWidget(style_section)
 
         # Add separator
@@ -407,6 +473,48 @@ class MainWindow(QMainWindow):
             self.editor.setCurrentCharFormat(fmt)
         
         self.editor.setFocus()
+
+    def format_font_size(self):
+        try:
+            size = float(self.font_size.currentText())
+            cursor = self.editor.textCursor()
+            fmt = QTextCharFormat()
+            fmt.setFontPointSize(size)
+            
+            if cursor.hasSelection():
+                cursor.mergeCharFormat(fmt)
+            else:
+                self.editor.setCurrentCharFormat(fmt)
+            
+            self.editor.setFocus()
+        except ValueError:
+            pass
+
+    def decrease_font_size(self):
+        current_size = float(self.font_size.currentText())
+        new_size = current_size
+        
+        # Find the next smaller size in presets
+        for size in reversed(FONT_SIZES):
+            if size < current_size:
+                new_size = size
+                break
+        
+        self.font_size.setCurrentText(str(new_size))
+        self.format_font_size()
+
+    def increase_font_size(self):
+        current_size = float(self.font_size.currentText())
+        new_size = current_size
+        
+        # Find the next larger size in presets
+        for size in FONT_SIZES:
+            if size > current_size:
+                new_size = size
+                break
+        
+        self.font_size.setCurrentText(str(new_size))
+        self.format_font_size()
 
     def refresh_note_list(self, notes):
         self.note_list.clear()
