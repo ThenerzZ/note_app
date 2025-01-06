@@ -2,12 +2,13 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QListWidget, QTextEdit, QLineEdit,
                              QSplitter, QLabel, QListWidgetItem, QToolBar,
                              QFontComboBox, QSpinBox, QComboBox, QFrame,
-                             QMenu, QToolButton)
+                             QMenu, QToolButton, QMenuBar, QStatusBar)
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import (QIcon, QFont, QKeySequence, QTextCharFormat,
                         QColor, QTextCursor, QAction, QFontDatabase,
                         QTextListFormat, QTextBlockFormat)
 from .styles import *
+from .enhanced_editor import EnhancedEditor
 
 # Preset font sizes that match common text editors
 FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72]
@@ -29,6 +30,12 @@ class FontSizeComboBox(QComboBox):
         
         # Connect signals
         self.currentTextChanged.connect(self.validate_size)
+    
+    def value(self):
+        try:
+            return float(self.currentText())
+        except ValueError:
+            return 11.0
         
     def validate_size(self, text):
         try:
@@ -96,59 +103,18 @@ class MainWindow(QMainWindow):
         self.setup_shortcuts()
 
     def setup_shortcuts(self):
-        # Save shortcut
-        save_shortcut = QAction("Save", self)
-        save_shortcut.setShortcut(QKeySequence.Save)
-        save_shortcut.triggered.connect(lambda: self.btn_save.click())
-        self.addAction(save_shortcut)
-
-        # New note shortcut
-        new_shortcut = QAction("New", self)
-        new_shortcut.setShortcut(QKeySequence("Ctrl+N"))
-        new_shortcut.triggered.connect(lambda: self.btn_new.click())
-        self.addAction(new_shortcut)
-
-        # Search shortcut
-        search_shortcut = QAction("Search", self)
-        search_shortcut.setShortcut(QKeySequence("Ctrl+F"))
-        search_shortcut.triggered.connect(lambda: self.search_bar.setFocus())
-        self.addAction(search_shortcut)
-
-        # Text formatting shortcuts
-        bold_shortcut = QAction("Bold", self)
-        bold_shortcut.setShortcut(QKeySequence.Bold)
-        bold_shortcut.triggered.connect(lambda: self.format_text('bold'))
-        self.addAction(bold_shortcut)
-
-        italic_shortcut = QAction("Italic", self)
-        italic_shortcut.setShortcut(QKeySequence.Italic)
-        italic_shortcut.triggered.connect(lambda: self.format_text('italic'))
-        self.addAction(italic_shortcut)
-
-        underline_shortcut = QAction("Underline", self)
-        underline_shortcut.setShortcut(QKeySequence.Underline)
-        underline_shortcut.triggered.connect(lambda: self.format_text('underline'))
-        self.addAction(underline_shortcut)
-
-        # Add font size shortcuts
-        increase_size = QAction("Increase Font Size", self)
-        increase_size.setShortcut(QKeySequence("Ctrl++"))
-        increase_size.triggered.connect(self.increase_font_size)
-        self.addAction(increase_size)
-
-        decrease_size = QAction("Decrease Font Size", self)
-        decrease_size.setShortcut(QKeySequence("Ctrl+-"))
-        decrease_size.triggered.connect(self.decrease_font_size)
-        self.addAction(decrease_size)
+        # We'll remove this method since we're handling shortcuts in the menu bar
+        pass
 
     def setup_ui(self):
         self.setStyleSheet(MAIN_WINDOW_STYLE)
         
+        # Main widget and layout
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         layout = QHBoxLayout(main_widget)
-        layout.setSpacing(15)
-        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
         
         # Create splitter
         self.splitter = QSplitter(Qt.Horizontal)
@@ -157,31 +123,35 @@ class MainWindow(QMainWindow):
         # Left panel (Navigation)
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
-        left_layout.setSpacing(10)
-        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(5)
+        left_layout.setContentsMargins(10, 10, 10, 10)
         
-        # Category selector with label
-        category_widget = QWidget()
-        category_layout = QHBoxLayout(category_widget)
-        category_layout.setContentsMargins(0, 0, 0, 0)
+        # Search and category in one toolbar
+        nav_toolbar = QFrame()
+        nav_toolbar.setStyleSheet(NAV_TOOLBAR_STYLE)
+        nav_layout = QVBoxLayout(nav_toolbar)
+        nav_layout.setSpacing(6)
+        nav_layout.setContentsMargins(8, 8, 8, 8)
         
-        category_label = QLabel("📂 Category:")
-        category_label.setStyleSheet(LABEL_STYLE)
+        # Category selector
         self.category_combo = QComboBox()
         self.category_combo.setStyleSheet(COMBOBOX_STYLE)
-        self.category_combo.addItems(["All Notes", "Personal", "Work", "Ideas", "Tasks"])
-        self.category_combo.currentTextChanged.connect(self.category_changed.emit)
+        self.category_combo.addItems(["📁 All Notes", "👤 Personal", "💼 Work", "💡 Ideas", "✅ Tasks"])
+        self.category_combo.currentTextChanged.connect(
+            lambda t: self.category_changed.emit(t.split(" ", 1)[1])
+        )
+        self.category_combo.setMinimumWidth(200)
+        self.category_combo.setFixedHeight(28)  # Consistent height
         
-        category_layout.addWidget(category_label)
-        category_layout.addWidget(self.category_combo)
-        left_layout.addWidget(category_widget)
-        
-        # Search bar with icon
+        # Search bar
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("🔍 Search notes...")
         self.search_bar.setStyleSheet(SEARCH_BAR_STYLE)
-        self.search_bar.textChanged.connect(lambda text: self.search_changed.emit(text))
-        left_layout.addWidget(self.search_bar)
+        self.search_bar.textChanged.connect(self.search_changed.emit)
+        self.search_bar.setFixedHeight(28)  # Consistent height
+        
+        nav_layout.addWidget(self.category_combo)
+        nav_layout.addWidget(self.search_bar)
         
         # Note list
         self.note_list = QListWidget()
@@ -189,192 +159,238 @@ class MainWindow(QMainWindow):
         self.note_list.itemClicked.connect(
             lambda item: self.note_selected.emit(item.data(Qt.UserRole))
         )
+        
+        left_layout.addWidget(nav_toolbar)
         left_layout.addWidget(self.note_list)
         
-        # Right panel
+        # Right panel (Editor)
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
-        right_layout.setSpacing(10)
+        right_layout.setSpacing(0)
         right_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Main toolbar
-        toolbar = QWidget()
-        toolbar_layout = QHBoxLayout(toolbar)
-        toolbar_layout.setContentsMargins(0, 0, 0, 0)
-        toolbar_layout.setSpacing(10)
-        
-        # Main buttons
-        self.btn_new = QPushButton("✨ New Note")
-        self.btn_save = QPushButton("💾 Save")
-        self.btn_delete = QPushButton("🗑️ Delete")
-        self.btn_toggle_preview = QPushButton("👁️ Preview")
-        self.btn_export = QPushButton("📤 Export")
-        
-        for btn in [self.btn_new, self.btn_save, self.btn_delete, 
-                   self.btn_toggle_preview, self.btn_export]:
-            btn.setStyleSheet(BUTTON_STYLE)
-            toolbar_layout.addWidget(btn)
-        
-        toolbar_layout.addStretch()
-        
-        # Formatting toolbar
+        # Format toolbar
         format_toolbar = QFrame()
         format_toolbar.setStyleSheet(TOOLBAR_STYLE)
         format_layout = QHBoxLayout(format_toolbar)
-        format_layout.setContentsMargins(10, 5, 10, 5)
-        format_layout.setSpacing(8)
-
-        # Style section
-        style_section = QFrame()
-        style_layout = QHBoxLayout(style_section)
-        style_layout.setContentsMargins(0, 0, 0, 0)
-        style_layout.setSpacing(4)
-
-        # Font controls
-        font_controls = QWidget()
-        font_layout = QHBoxLayout(font_controls)
-        font_layout.setContentsMargins(0, 0, 0, 0)
-        font_layout.setSpacing(4)
-
-        # Font family with label
-        font_label = QLabel("Font:")
-        font_label.setStyleSheet(TOOLBAR_LABEL_STYLE)
+        format_layout.setContentsMargins(4, 0, 4, 0)  # Minimal margins
+        format_layout.setSpacing(1)  # Minimal spacing
+        
+        # Font controls in a more compact layout
         self.font_family = QFontComboBox()
         self.font_family.setStyleSheet(COMBOBOX_STYLE)
         self.font_family.currentFontChanged.connect(self.format_font)
-        self.font_family.setFixedWidth(180)
+        self.font_family.setFixedWidth(100)  # Even smaller width
         
-        # Font size with label
-        size_label = QLabel("Size:")
-        size_label.setStyleSheet(TOOLBAR_LABEL_STYLE)
         self.font_size = FontSizeComboBox()
         self.font_size.currentTextChanged.connect(self.format_font_size)
+        self.font_size.setFixedWidth(40)  # Even smaller width
         
-        # Add decrease/increase font size buttons
-        self.btn_decrease_size = FormatToolButton("Decrease size", "A-", "Decrease font size (Ctrl+-)")
-        self.btn_decrease_size.setCheckable(False)
-        self.btn_increase_size = FormatToolButton("Increase size", "A+", "Increase font size (Ctrl++)")
-        self.btn_increase_size.setCheckable(False)
+        # Format buttons in a more compact layout
+        format_layout.addWidget(self.font_family)
+        format_layout.addWidget(self.font_size)
+        format_layout.addWidget(create_small_separator())
         
-        self.btn_decrease_size.clicked.connect(self.decrease_font_size)
-        self.btn_increase_size.clicked.connect(self.increase_font_size)
-
-        font_layout.addWidget(font_label)
-        font_layout.addWidget(self.font_family)
-        font_layout.addSpacing(10)
-        font_layout.addWidget(size_label)
-        font_layout.addWidget(self.font_size)
-        font_layout.addWidget(self.btn_decrease_size)
-        font_layout.addWidget(self.btn_increase_size)
-        
-        style_layout.addWidget(font_controls)
-        format_layout.addWidget(style_section)
-
-        # Add separator
-        separator = QFrame()
-        separator.setFrameShape(QFrame.VLine)
-        separator.setStyleSheet(SEPARATOR_STYLE)
-        format_layout.addWidget(separator)
-
-        # Text format section
-        format_section = QFrame()
-        format_layout_inner = QHBoxLayout(format_section)
-        format_layout_inner.setContentsMargins(0, 0, 0, 0)
-        format_layout_inner.setSpacing(4)
-
-        # Format buttons with better icons
+        # Text style buttons
         self.btn_bold = FormatToolButton("Bold", "B", "Bold (Ctrl+B)")
         self.btn_italic = FormatToolButton("Italic", "I", "Italic (Ctrl+I)")
         self.btn_underline = FormatToolButton("Underline", "U", "Underline (Ctrl+U)")
         
-        # Text alignment buttons
+        for btn in [self.btn_bold, self.btn_italic, self.btn_underline]:
+            btn.setFixedSize(20, 20)  # Smaller buttons
+            format_layout.addWidget(btn)
+            btn.clicked.connect(lambda checked, b=btn: self.format_text(b.text().lower()))
+        
+        format_layout.addWidget(create_small_separator())
+        
+        # Alignment buttons
         self.btn_align_left = FormatToolButton("Left", "⫷", "Align Left")
         self.btn_align_center = FormatToolButton("Center", "⟺", "Center")
         self.btn_align_right = FormatToolButton("Right", "⫸", "Align Right")
         
+        for btn in [self.btn_align_left, self.btn_align_center, self.btn_align_right]:
+            btn.setFixedSize(20, 20)  # Smaller buttons
+            format_layout.addWidget(btn)
+            btn.clicked.connect(lambda checked, b=btn: self.align_text(b.text().lower()))
+        
+        format_layout.addWidget(create_small_separator())
+        
         # List buttons
         self.btn_bullet_list = FormatToolButton("Bullet List", "•", "Bullet List")
         self.btn_number_list = FormatToolButton("Number List", "1.", "Number List")
-
-        # Add all format buttons
-        for btn in [self.btn_bold, self.btn_italic, self.btn_underline]:
-            format_layout_inner.addWidget(btn)
         
-        # Add separator
-        separator2 = QFrame()
-        separator2.setFrameShape(QFrame.VLine)
-        separator2.setStyleSheet(SEPARATOR_STYLE)
-        format_layout_inner.addWidget(separator2)
-
-        # Add alignment buttons
-        for btn in [self.btn_align_left, self.btn_align_center, self.btn_align_right]:
-            format_layout_inner.addWidget(btn)
-
-        # Add separator
-        separator3 = QFrame()
-        separator3.setFrameShape(QFrame.VLine)
-        separator3.setStyleSheet(SEPARATOR_STYLE)
-        format_layout_inner.addWidget(separator3)
-
-        # Add list buttons
         for btn in [self.btn_bullet_list, self.btn_number_list]:
-            format_layout_inner.addWidget(btn)
-
-        format_layout.addWidget(format_section)
-        format_layout.addStretch()
-
-        # Connect format buttons
-        self.btn_bold.clicked.connect(lambda: self.format_text('bold'))
-        self.btn_italic.clicked.connect(lambda: self.format_text('italic'))
-        self.btn_underline.clicked.connect(lambda: self.format_text('underline'))
-        self.btn_align_left.clicked.connect(lambda: self.align_text('left'))
-        self.btn_align_center.clicked.connect(lambda: self.align_text('center'))
-        self.btn_align_right.clicked.connect(lambda: self.align_text('right'))
+            btn.setFixedSize(20, 20)  # Smaller buttons
+            format_layout.addWidget(btn)
+        
         self.btn_bullet_list.clicked.connect(lambda: self.make_list('bullet'))
         self.btn_number_list.clicked.connect(lambda: self.make_list('number'))
-
-        # Tags
-        tags_widget = QWidget()
-        tags_layout = QHBoxLayout(tags_widget)
-        tags_layout.setContentsMargins(0, 0, 0, 0)
         
-        self.tags_label = QLabel("🏷️ Tags:")
+        format_layout.addStretch()
+        
+        # Tags in a minimal inline layout
+        self.tags_label = QLabel("🏷️")
         self.tags_input = QLineEdit()
-        self.tags_input.setPlaceholderText("Add tags (comma-separated)")
+        self.tags_input.setPlaceholderText("Add tags...")
+        self.tags_input.setStyleSheet(TAGS_STYLE)
+        self.tags_input.setFixedWidth(120)  # Smaller width
+        self.tags_input.setFixedHeight(20)  # Smaller height
         
-        tags_widget.setStyleSheet(TAGS_STYLE)
-        tags_layout.addWidget(self.tags_label)
-        tags_layout.addWidget(self.tags_input)
+        format_layout.addWidget(self.tags_label)
+        format_layout.addWidget(self.tags_input)
+        format_layout.addWidget(create_small_separator())
         
-        # Editor and metadata
+        # Metadata label
         self.metadata_label = QLabel()
         self.metadata_label.setStyleSheet(METADATA_STYLE)
+        format_layout.addWidget(self.metadata_label)
         
-        # Text editor (using custom RichTextEdit)
-        self.editor = RichTextEdit()
-        self.editor.setStyleSheet(EDITOR_STYLE)
+        # Editor widget
+        self.editor_widget = EnhancedEditor()
+        self.editor = self.editor_widget.editor
+        self.preview = self.editor_widget.preview
+        
+        # Connect text change handler
         self.editor.textChanged.connect(self.handle_text_change)
         
-        # Preview widget
-        self.preview = QTextEdit()
-        self.preview.setReadOnly(True)
-        self.preview.setStyleSheet(EDITOR_STYLE)
-        self.preview.hide()
-        
-        # Add all widgets to right layout
-        right_layout.addWidget(toolbar)
+        # Add widgets to right layout
         right_layout.addWidget(format_toolbar)
-        right_layout.addWidget(tags_widget)
-        right_layout.addWidget(self.metadata_label)
-        right_layout.addWidget(self.editor)
-        right_layout.addWidget(self.preview)
+        right_layout.addWidget(self.editor_widget)
         
         # Add panels to splitter
         self.splitter.addWidget(left_panel)
         self.splitter.addWidget(right_panel)
-        self.splitter.setSizes([350, 650])
+        self.splitter.setSizes([250, 750])  # 25% - 75% split
         
         layout.addWidget(self.splitter)
+        
+        # Create status bar
+        self.statusBar = QStatusBar()
+        self.setStatusBar(self.statusBar)
+        
+        # Create menu bar (after editor_widget is created)
+        self.create_menu_bar()
+
+    def create_menu_bar(self):
+        menubar = self.menuBar()
+        menubar.setStyleSheet(MENU_STYLE)
+        
+        # File menu
+        file_menu = menubar.addMenu("File")
+        
+        # Create buttons first
+        self.btn_new = QAction("New Note", self)
+        self.btn_new.setShortcut(QKeySequence("Ctrl+N"))
+        self.btn_new.triggered.connect(self.new_note_requested.emit)
+        
+        self.btn_save = QAction("Save", self)
+        self.btn_save.setShortcut(QKeySequence("Ctrl+S"))
+        self.btn_save.triggered.connect(self.save_note_requested.emit)
+        
+        file_menu.addAction(self.btn_new)
+        file_menu.addAction(self.btn_save)
+        file_menu.addSeparator()
+        
+        # Export menu
+        export_menu = QMenu("Export As", self)
+        self.export_md = export_menu.addAction("Markdown (.md)")
+        self.export_html = export_menu.addAction("HTML (.html)")
+        self.export_pdf = export_menu.addAction("PDF (.pdf)")
+        self.export_docx = export_menu.addAction("Word (.docx)")
+        file_menu.addMenu(export_menu)
+        
+        # Edit menu
+        edit_menu = menubar.addMenu("Edit")
+        
+        # Add search action to Edit menu
+        search_action = QAction("Search", self)
+        search_action.setShortcut(QKeySequence("Ctrl+F"))
+        search_action.triggered.connect(lambda: self.search_bar.setFocus())
+        edit_menu.addAction(search_action)
+        
+        # Format menu
+        format_menu = menubar.addMenu("Format")
+        
+        # Text formatting actions
+        bold_action = QAction("Bold", self)
+        bold_action.setShortcut(QKeySequence("Ctrl+B"))
+        bold_action.triggered.connect(lambda: self.format_text('bold'))
+        format_menu.addAction(bold_action)
+        
+        italic_action = QAction("Italic", self)
+        italic_action.setShortcut(QKeySequence("Ctrl+I"))
+        italic_action.triggered.connect(lambda: self.format_text('italic'))
+        format_menu.addAction(italic_action)
+        
+        underline_action = QAction("Underline", self)
+        underline_action.setShortcut(QKeySequence("Ctrl+U"))
+        underline_action.triggered.connect(lambda: self.format_text('underline'))
+        format_menu.addAction(underline_action)
+        
+        format_menu.addSeparator()
+        
+        # Font size shortcuts
+        increase_size = QAction("Increase Font Size", self)
+        increase_size.setShortcut(QKeySequence("Ctrl++"))
+        increase_size.triggered.connect(self.increase_font_size)
+        format_menu.addAction(increase_size)
+        
+        decrease_size = QAction("Decrease Font Size", self)
+        decrease_size.setShortcut(QKeySequence("Ctrl+-"))
+        decrease_size.triggered.connect(self.decrease_font_size)
+        format_menu.addAction(decrease_size)
+        
+        format_menu.addSeparator()
+        
+        # Alignment submenu
+        align_menu = format_menu.addMenu("Align")
+        align_menu.addAction("Left").triggered.connect(lambda: self.align_text('left'))
+        align_menu.addAction("Center").triggered.connect(lambda: self.align_text('center'))
+        align_menu.addAction("Right").triggered.connect(lambda: self.align_text('right'))
+        
+        # List submenu
+        list_menu = format_menu.addMenu("List")
+        list_menu.addAction("Bullet List").triggered.connect(lambda: self.make_list('bullet'))
+        list_menu.addAction("Number List").triggered.connect(lambda: self.make_list('number'))
+        
+        # Insert menu
+        insert_menu = menubar.addMenu("Insert")
+        
+        insert_menu.addAction("Image").triggered.connect(self.editor_widget.insert_image)
+        insert_menu.addAction("Table").triggered.connect(self.editor_widget.insert_table)
+        
+        code_menu = insert_menu.addMenu("Code Block")
+        languages = ["Python", "JavaScript", "HTML", "CSS", "Java", "C++", "SQL", "Bash"]
+        for lang in languages:
+            code_menu.addAction(lang).triggered.connect(
+                lambda checked, l=lang.lower(): self.editor_widget.insert_code_block(l)
+            )
+        
+        insert_menu.addAction("Task Checkbox").triggered.connect(self.insert_checkbox)
+        
+        # View menu
+        view_menu = menubar.addMenu("View")
+        
+        preview_action = QAction("Toggle Preview", self)
+        preview_action.setShortcut(QKeySequence("Ctrl+P"))
+        preview_action.triggered.connect(self.toggle_preview)
+        view_menu.addAction(preview_action)
+        
+        full_preview_action = QAction("Full Preview", self)
+        full_preview_action.setShortcut(QKeySequence("Ctrl+Shift+P"))
+        full_preview_action.triggered.connect(lambda: self.editor_widget.toggle_preview("full"))
+        view_menu.addAction(full_preview_action)
+        
+        # Connect export actions
+        self.export_md.triggered.connect(lambda: self.export_requested.emit("markdown"))
+        self.export_html.triggered.connect(lambda: self.export_requested.emit("html"))
+        self.export_pdf.triggered.connect(lambda: self.export_requested.emit("pdf"))
+        self.export_docx.triggered.connect(lambda: self.export_requested.emit("docx"))
+
+    # Add new signals for menu actions
+    new_note_requested = Signal()
+    save_note_requested = Signal()
+    export_requested = Signal(str)  # Signal with export format parameter
 
     def format_text(self, format_type):
         cursor = self.editor.textCursor()
@@ -543,11 +559,37 @@ class MainWindow(QMainWindow):
     def get_note_tags(self):
         return self.tags_input.text()
     
-    def toggle_preview(self, html_content):
-        if self.preview.isHidden():
-            self.preview.show()
-            self.editor.hide()
-            self.preview.setHtml(html_content)
-        else:
-            self.preview.hide()
-            self.editor.show() 
+    def toggle_preview(self):
+        self.editor_widget.toggle_preview("split")
+    
+    def insert_code_block(self):
+        languages = ["python", "javascript", "html", "css", "java", "cpp", "sql", "bash"]
+        menu = QMenu(self)
+        for lang in languages:
+            action = menu.addAction(lang.capitalize())
+            action.triggered.connect(lambda checked, l=lang: self.editor_widget.insert_code_block(l))
+        
+        menu.exec_(self.btn_insert_code.mapToGlobal(self.btn_insert_code.rect().bottomLeft()))
+    
+    def insert_checkbox(self):
+        cursor = self.editor.textCursor()
+        cursor.insertText("- [ ] ")
+    
+    def insert_image(self):
+        self.editor_widget.insert_image()
+    
+    def insert_table(self):
+        self.editor_widget.insert_table()
+    
+    def insert_code(self):
+        self.editor_widget.insert_code()
+    
+    def insert_checkbox(self):
+        self.editor_widget.insert_checkbox() 
+
+def create_small_separator():
+    separator = QFrame()
+    separator.setFrameShape(QFrame.VLine)
+    separator.setStyleSheet(SEPARATOR_STYLE)
+    separator.setFixedHeight(16)  # Even smaller height
+    return separator 

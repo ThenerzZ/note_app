@@ -1,234 +1,147 @@
 from PySide6.QtGui import QColor
 
 # Color palette
-COLORS = {
-    'background_dark': '#1a1a1a',
-    'background_darker': '#141414',
-    'pink_primary': '#ff69b4',
-    'pink_light': '#ff8dc7',
-    'pink_dark': '#cc5490',
-    'text_light': '#ffffff',
-    'text_dark': '#e0e0e0',
-    'border_light': '#2d2d2d',
-    'hover_dark': '#252525',
-    'metadata_text': '#888888',
-    'toolbar_bg': '#1f1f1f',
-    'separator': '#333333',
-    'button_hover': '#2a2a2a',
-    'button_pressed': '#1f1f1f',
-    'button_checked': '#cc5490'
-}
+PINK = "#ff69b4"
+DARK_BG = "#141414"
+DARKER_BG = "#0a0a0a"
+LIGHTER_BG = "#1f1f1f"
+BORDER = "#2d2d2d"
+TEXT = "#ffffff"
+MUTED_TEXT = "#888888"
 
-# Main window style
 MAIN_WINDOW_STYLE = f"""
     QMainWindow {{
-        background-color: {COLORS['background_dark']};
-    }}
-    QWidget {{
-        font-family: 'SF Pro Display', 'Segoe UI', Arial, sans-serif;
-        font-size: 10pt;
-        color: {COLORS['text_light']};
-    }}
-    QScrollBar:vertical {{
-        border: none;
-        background: {COLORS['background_darker']};
-        width: 14px;
-        margin: 0;
-    }}
-    QScrollBar::handle:vertical {{
-        background: {COLORS['border_light']};
-        min-height: 20px;
-        border-radius: 7px;
-        margin: 2px;
-    }}
-    QScrollBar::handle:vertical:hover {{
-        background: {COLORS['pink_dark']};
-    }}
-    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
-        height: 0;
-        background: none;
-    }}
-    QScrollBar:horizontal {{
-        border: none;
-        background: {COLORS['background_darker']};
-        height: 14px;
-        margin: 0;
-    }}
-    QScrollBar::handle:horizontal {{
-        background: {COLORS['border_light']};
-        min-width: 20px;
-        border-radius: 7px;
-        margin: 2px;
-    }}
-    QScrollBar::handle:horizontal:hover {{
-        background: {COLORS['pink_dark']};
-    }}
-    QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
-        width: 0;
-        background: none;
+        background-color: {DARK_BG};
+        color: {TEXT};
     }}
 """
 
-# Search bar style
-SEARCH_BAR_STYLE = f"""
-    QLineEdit {{
-        padding: 8px 15px;
-        border: none;
-        border-radius: 8px;
-        background-color: {COLORS['background_darker']};
-        color: {COLORS['text_light']};
-        font-size: 11pt;
-        margin-bottom: 5px;
+MENU_STYLE = f"""
+    QMenuBar {{
+        background-color: {DARKER_BG};
+        color: {TEXT};
+        border-bottom: 1px solid {BORDER};
+        padding: 1px;
     }}
-    QLineEdit:focus {{
-        background-color: {COLORS['hover_dark']};
-        border: 2px solid {COLORS['pink_primary']};
-        padding: 6px 13px;
+    QMenuBar::item {{
+        background-color: transparent;
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin: 1px;
     }}
-"""
-
-# Note list style
-NOTE_LIST_STYLE = f"""
-    QListWidget {{
-        background-color: {COLORS['background_darker']};
-        border: none;
-        border-radius: 8px;
-        padding: 5px;
+    QMenuBar::item:selected {{
+        background-color: {PINK};
+        color: {DARKER_BG};
     }}
-    QListWidget::item {{
-        background-color: {COLORS['background_darker']};
-        border: none;
-        padding: 12px;
+    QMenu {{
+        background-color: {DARKER_BG};
+        color: {TEXT};
+        border: 1px solid {BORDER};
         border-radius: 6px;
-        margin: 2px 5px;
+        padding: 4px;
     }}
-    QListWidget::item:selected {{
-        background-color: {COLORS['pink_dark']};
-        color: {COLORS['text_light']};
+    QMenu::item {{
+        padding: 4px 24px;
+        border-radius: 4px;
     }}
-    QListWidget::item:hover:!selected {{
-        background-color: {COLORS['hover_dark']};
+    QMenu::item:selected {{
+        background-color: {PINK};
+        color: {DARKER_BG};
     }}
-"""
-
-# Button style
-BUTTON_STYLE = f"""
-    QPushButton {{
-        padding: 8px 15px;
-        border: none;
-        border-radius: 6px;
-        background-color: {COLORS['pink_primary']};
-        color: {COLORS['text_light']};
-        font-weight: 500;
-        min-width: 80px;
-    }}
-    QPushButton:hover {{
-        background-color: {COLORS['pink_light']};
-    }}
-    QPushButton:pressed {{
-        background-color: {COLORS['pink_dark']};
+    QMenu::separator {{
+        height: 1px;
+        background-color: {BORDER};
+        margin: 4px 0px;
     }}
 """
 
-# Tool button style
 TOOL_BUTTON_STYLE = f"""
     QToolButton {{
-        border: none;
-        border-radius: 5px;
         background-color: transparent;
-        color: {COLORS['text_light']};
-        font-weight: 600;
-        font-family: 'SF Pro Display', 'Segoe UI', Arial, sans-serif;
-        padding: 4px;
-        min-width: 32px;
-        min-height: 32px;
+        color: {TEXT};
+        border: 1px solid transparent;
+        border-radius: 2px;
+        padding: 1px;
+        font-weight: bold;
+        min-width: 20px;
+        max-width: 20px;
+        min-height: 20px;
+        max-height: 20px;
     }}
     QToolButton:hover {{
-        background-color: {COLORS['button_hover']};
+        background-color: {LIGHTER_BG};
+        border: 1px solid {BORDER};
     }}
     QToolButton:pressed {{
-        background-color: {COLORS['button_pressed']};
+        background-color: {BORDER};
     }}
     QToolButton:checked {{
-        background-color: {COLORS['button_checked']};
-        color: {COLORS['text_light']};
-    }}
-    QToolButton:disabled {{
-        color: {COLORS['metadata_text']};
+        background-color: {PINK};
+        color: {DARKER_BG};
     }}
 """
 
-# Editor style
-EDITOR_STYLE = f"""
-    QTextEdit {{
-        padding: 20px;
-        border: none;
-        border-radius: 8px;
-        background-color: {COLORS['background_darker']};
-        color: {COLORS['text_light']};
-        font-family: 'SF Pro Text', 'Segoe UI', Arial, sans-serif;
-        font-size: 11pt;
-        line-height: 1.6;
-        selection-background-color: {COLORS['pink_dark']};
-        selection-color: {COLORS['text_light']};
-    }}
-    QTextEdit:focus {{
-        background-color: {COLORS['hover_dark']};
-    }}
-"""
-
-# Tags input style
-TAGS_STYLE = f"""
-    QLineEdit {{
-        padding: 8px 15px;
-        border: none;
-        border-radius: 6px;
-        background-color: {COLORS['background_darker']};
-        color: {COLORS['text_light']};
-        margin-right: 10px;
-    }}
-    QLineEdit:focus {{
-        background-color: {COLORS['hover_dark']};
-        border: 2px solid {COLORS['pink_primary']};
-        padding: 6px 13px;
-    }}
-    QLabel {{
-        color: {COLORS['pink_primary']};
-        font-weight: 500;
-        margin-right: 5px;
-    }}
-"""
-
-# Splitter style
 SPLITTER_STYLE = f"""
     QSplitter::handle {{
-        background-color: {COLORS['border_light']};
+        background-color: {BORDER};
         width: 1px;
-        margin: 2px;
-    }}
-    QSplitter::handle:hover {{
-        background-color: {COLORS['pink_primary']};
     }}
 """
 
-# Combobox style
+NAV_TOOLBAR_STYLE = f"""
+    QFrame {{
+        background-color: {LIGHTER_BG};
+        border-radius: 4px;
+        margin: 0px;
+        padding: 0px;
+    }}
+"""
+
+TOOLBAR_STYLE = f"""
+    QFrame {{
+        background-color: {LIGHTER_BG};
+        border-bottom: 1px solid {BORDER};
+        margin: 0px;
+        padding: 0px;
+        max-height: 28px;
+    }}
+"""
+
+INFO_BAR_STYLE = f"""
+    QFrame {{
+        background-color: {LIGHTER_BG};
+        border-bottom: 1px solid {BORDER};
+        padding: 2px;
+    }}
+"""
+
+SEARCH_BAR_STYLE = f"""
+    QLineEdit {{
+        background-color: {DARKER_BG};
+        color: {TEXT};
+        border: 1px solid {BORDER};
+        border-radius: 4px;
+        padding: 6px;
+        font-size: 12px;
+        min-height: 24px;
+    }}
+    QLineEdit:focus {{
+        border: 1px solid {PINK};
+    }}
+"""
+
 COMBOBOX_STYLE = f"""
     QComboBox {{
-        padding: 5px 10px;
-        border: none;
-        border-radius: 6px;
-        background-color: {COLORS['background_darker']};
-        color: {COLORS['text_light']};
-        min-width: 60px;
-        font-size: 10pt;
+        background-color: {DARKER_BG};
+        color: {TEXT};
+        border: 1px solid {BORDER};
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-size: 12px;
+        min-height: 24px;
     }}
     QComboBox:hover {{
-        background-color: {COLORS['hover_dark']};
-    }}
-    QComboBox:focus {{
-        background-color: {COLORS['hover_dark']};
-        border: 2px solid {COLORS['pink_primary']};
-        padding: 3px 8px;
+        border: 1px solid {PINK};
     }}
     QComboBox::drop-down {{
         border: none;
@@ -238,110 +151,74 @@ COMBOBOX_STYLE = f"""
         image: none;
         border-left: 4px solid transparent;
         border-right: 4px solid transparent;
-        border-top: 4px solid {COLORS['text_light']};
-        margin-right: 8px;
+        border-top: 4px solid {TEXT};
+        margin-right: 4px;
     }}
     QComboBox QAbstractItemView {{
-        background-color: {COLORS['background_darker']};
-        border: 1px solid {COLORS['border_light']};
-        border-radius: 6px;
-        selection-background-color: {COLORS['pink_dark']};
-        selection-color: {COLORS['text_light']};
+        background-color: {DARKER_BG};
+        color: {TEXT};
+        border: 1px solid {BORDER};
+        border-radius: 4px;
         padding: 4px;
-    }}
-    QComboBox QLineEdit {{
-        background-color: transparent;
-        border: none;
-        padding: 0;
-        color: {COLORS['text_light']};
-        selection-background-color: {COLORS['pink_dark']};
-        selection-color: {COLORS['text_light']};
+        selection-background-color: {PINK};
+        selection-color: {DARKER_BG};
+        min-width: 200px;  /* Match the combo box width */
     }}
 """
 
-# Spinbox style
-SPINBOX_STYLE = f"""
-    QSpinBox {{
-        padding: 8px;
+NOTE_LIST_STYLE = f"""
+    QListWidget {{
+        background-color: {DARKER_BG};
+        color: {TEXT};
         border: none;
+        border-radius: 8px;
+        padding: 4px;
+        font-size: 13px;
+    }}
+    QListWidget::item {{
+        background-color: {LIGHTER_BG};
         border-radius: 6px;
-        background-color: {COLORS['background_darker']};
-        color: {COLORS['text_light']};
-        min-width: 80px;
+        padding: 8px;
+        margin: 2px 4px;
     }}
-    QSpinBox:hover {{
-        background-color: {COLORS['hover_dark']};
+    QListWidget::item:selected {{
+        background-color: {PINK};
+        color: {DARKER_BG};
     }}
-    QSpinBox:focus {{
-        background-color: {COLORS['hover_dark']};
-        border: 2px solid {COLORS['pink_primary']};
-        padding: 6px;
-    }}
-    QSpinBox::up-button, QSpinBox::down-button {{
-        border: none;
-        background: transparent;
-        width: 16px;
-        padding: 0 4px;
-    }}
-    QSpinBox::up-button:hover, QSpinBox::down-button:hover {{
-        background: {COLORS['button_hover']};
-    }}
-    QSpinBox::up-arrow {{
-        border-left: 4px solid transparent;
-        border-right: 4px solid transparent;
-        border-bottom: 4px solid {COLORS['text_light']};
-    }}
-    QSpinBox::down-arrow {{
-        border-left: 4px solid transparent;
-        border-right: 4px solid transparent;
-        border-top: 4px solid {COLORS['text_light']};
+    QListWidget::item:hover:!selected {{
+        background-color: {BORDER};
     }}
 """
 
-# Metadata style
+TAGS_STYLE = f"""
+    QLineEdit {{
+        background-color: {DARKER_BG};
+        color: {TEXT};
+        border: 1px solid {BORDER};
+        border-radius: 2px;
+        padding: 1px 4px;
+        font-size: 11px;
+        min-height: 20px;
+        max-height: 20px;
+    }}
+    QLineEdit:focus {{
+        border: 1px solid {PINK};
+    }}
+"""
+
 METADATA_STYLE = f"""
     QLabel {{
-        color: {COLORS['metadata_text']};
-        font-size: 9pt;
-        padding: 5px 10px;
-        background-color: transparent;
-        font-weight: 400;
+        color: {MUTED_TEXT};
+        font-size: 11px;
+        padding: 0px 4px;
     }}
 """
 
-# Label style
-LABEL_STYLE = f"""
-    QLabel {{
-        color: {COLORS['pink_primary']};
-        font-weight: 500;
-        font-size: 10pt;
-    }}
-"""
-
-# Toolbar style
-TOOLBAR_STYLE = f"""
-    QFrame {{
-        background-color: {COLORS['toolbar_bg']};
-        border-radius: 8px;
-        margin-bottom: 8px;
-    }}
-"""
-
-# Separator style
 SEPARATOR_STYLE = f"""
     QFrame {{
-        background-color: {COLORS['separator']};
+        background-color: {BORDER};
         width: 1px;
-        margin: 4px 8px;
-    }}
-"""
-
-# Toolbar label style
-TOOLBAR_LABEL_STYLE = f"""
-    QLabel {{
-        color: {COLORS['text_light']};
-        font-weight: 500;
-        font-size: 10pt;
-        margin-right: 2px;
+        margin: 2px 4px;
+        max-height: 16px;
     }}
 """ 

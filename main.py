@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication, QFileDialog, QColorDialog, QMessageBox
+from PySide6.QtWidgets import QApplication, QFileDialog, QColorDialog, QMessageBox, QInputDialog
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QTextCharFormat, QColor
 import markdown
@@ -18,12 +18,10 @@ class NoteTypewriter:
         self.window.search_changed.connect(self.search_notes)
         self.window.category_changed.connect(self.change_category)
         
-        # Connect button signals
-        self.window.btn_new.clicked.connect(self.new_note)
-        self.window.btn_save.clicked.connect(self.save_note)
-        self.window.btn_delete.clicked.connect(self.delete_current_note)
-        self.window.btn_toggle_preview.clicked.connect(self.toggle_preview)
-        self.window.btn_export.clicked.connect(self.export_note)
+        # Connect menu action signals
+        self.window.new_note_requested.connect(self.new_note)
+        self.window.save_note_requested.connect(self.save_note)
+        self.window.export_requested.connect(self.export_note)
         
         # Set up auto-save timer
         self.auto_save_timer = QTimer()
@@ -42,7 +40,6 @@ class NoteTypewriter:
         self.window.refresh_note_list(notes)
     
     def new_note(self):
-        from PySide6.QtWidgets import QInputDialog
         title, ok = QInputDialog.getText(self.window, "New Note", "Enter note title:")
         if ok and title:
             note = self.db.create_note(
@@ -65,13 +62,11 @@ class NoteTypewriter:
                     'updated_at': note.updated_at
                 }
             )
-            if note.html_content:
-                self.window.editor.setHtml(note.html_content)
     
     def save_note(self):
         if self.current_note:
             content = self.window.get_note_content()
-            html_content = self.window.editor.toHtml()
+            html_content = self.window.editor_widget.preview.md.convert(content)
             self.db.update_note(
                 self.current_note.id,
                 content=content,
@@ -83,10 +78,6 @@ class NoteTypewriter:
     def auto_save(self):
         if self.current_note and self.window.editor.document().isModified():
             self.save_note()
-    
-    def delete_current_note(self):
-        if self.current_note:
-            self.delete_note(self.current_note.id)
     
     def delete_note(self, note_id):
         reply = QMessageBox.question(
@@ -112,35 +103,61 @@ class NoteTypewriter:
             self.current_category = NoteCategory.ALL
         self.refresh_notes()
     
-    def toggle_preview(self):
-        content = self.window.get_note_content()
-        html = markdown.markdown(content)
-        self.window.toggle_preview(html)
-    
-    def export_note(self):
+    def export_note(self, format_type):
         if not self.current_note:
             return
+        
+        file_filters = {
+            "markdown": "Markdown Files (*.md)",
+            "html": "HTML Files (*.html)",
+            "pdf": "PDF Files (*.pdf)",
+            "docx": "Word Document (*.docx)"
+        }
         
         file_name, _ = QFileDialog.getSaveFileName(
             self.window,
             "Export Note",
             "",
-            "Markdown Files (*.md);;HTML Files (*.html);;All Files (*)"
+            file_filters[format_type]
         )
         
         if file_name:
-            format_type = "html" if file_name.endswith('.html') else "markdown"
             note_data = self.db.export_note(self.current_note.id, format=format_type)
             
             if note_data:
                 try:
-                    with open(file_name, 'w', encoding='utf-8') as f:
-                        if format_type == "markdown":
+                    if format_type == "markdown":
+                        with open(file_name, 'w', encoding='utf-8') as f:
                             f.write(f"# {note_data['title']}\n\n")
                             f.write(note_data['content'])
-                        else:
+                    elif format_type == "html":
+                        html_content = self.window.editor_widget.preview.md.convert(note_data['content'])
+                        with open(file_name, 'w', encoding='utf-8') as f:
                             f.write(f"<h1>{note_data['title']}</h1>\n")
-                            f.write(note_data['content'])
+                            f.write(html_content)
+                    elif format_type == "pdf":
+                        import pdfkit
+                        html_content = self.window.editor_widget.preview.md.convert(note_data['content'])
+                        styled_html = f"""
+                        <style>
+                            body {{
+                                font-family: 'Arial', sans-serif;
+                                line-height: 1.6;
+                                margin: 40px;
+                            }}
+                            h1 {{ color: #ff69b4; }}
+                            pre {{ background-color: #f5f5f5; padding: 10px; }}
+                        </style>
+                        <h1>{note_data['title']}</h1>
+                        {html_content}
+                        """
+                        pdfkit.from_string(styled_html, file_name)
+                    elif format_type == "docx":
+                        from docx import Document
+                        doc = Document()
+                        doc.add_heading(note_data['title'], 0)
+                        doc.add_paragraph(note_data['content'])
+                        doc.save(file_name)
                     
                     QMessageBox.information(
                         self.window,
