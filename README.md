@@ -1,22 +1,64 @@
 # Note Typewriter
 
-A modern, sleek note-taking application with rich features and a beautiful UI.
+A modern, sleek note-taking application with rich text editing capabilities and a dark theme.
 
 ## Features
 
-- 🎨 Modern and clean user interface
-- 📝 Rich text editing with Markdown support
-- 🔍 Full-text search functionality
-- 🏷️ Tag system for note organization
-- 💾 Auto-save feature
-- 👀 Live Markdown preview
-- 📱 Responsive and resizable panels
+### Text Editing
+- Rich text formatting:
+  - Bold (Ctrl+B)
+  - Italic (Ctrl+I)
+  - Underline (Ctrl+U)
+  - Font selection
+  - Font size adjustment (Ctrl++ to increase, Ctrl+- to decrease)
+  - Text alignment (Left, Center, Right)
+  - Bullet and numbered lists
+
+### Note Organization
+- Category-based organization:
+  - All Notes
+  - Personal
+  - Work
+  - Ideas
+  - Tasks
+- Tag support for better note organization
+- Full-text search functionality (Ctrl+F)
+- Auto-save feature (every 30 seconds)
+
+### Markdown Support
+- Insert code blocks with syntax highlighting for:
+  - Python
+  - JavaScript
+  - HTML
+  - CSS
+  - Java
+  - C++
+  - SQL
+  - Bash
+- Task checkboxes for to-do lists
+- Tables
+- Image support (drag & drop supported)
+- Preview mode (Ctrl+P)
+- Full preview mode (Ctrl+Shift+P)
+
+### Export Options
+Export notes to multiple formats:
+- Markdown (.md)
+- HTML (.html)
+- PDF (.pdf)
+- Word Document (.docx)
+
+### User Interface
+- Modern dark theme with pink accents
+- Split view with note list and editor
+- Compact formatting toolbar
+- Keyboard shortcuts for common actions
+- Note metadata display (creation and modification dates)
 
 ## Installation
 
-1. Make sure you have Python 3.7+ installed on your system
-2. Clone this repository
-3. Install the required dependencies:
+1. Ensure you have Python 3.8 or higher installed
+2. Install the required dependencies:
 ```bash
 pip install -r requirements.txt
 ```
@@ -28,27 +70,14 @@ Run the application:
 python main.py
 ```
 
-### Basic Operations
-
-- **Create a new note**: Click the "New Note" button
-- **Save a note**: Click "Save" or wait for auto-save (every 30 seconds)
-- **Delete a note**: Select a note and click "Delete"
-- **Search notes**: Type in the search bar to filter notes
-- **Add tags**: Enter comma-separated tags in the tags field
-- **Preview Markdown**: Click "Toggle Preview" to see rendered Markdown
-
 ### Keyboard Shortcuts
-
-- `Ctrl+S`: Save current note
-- `Ctrl+F`: Focus search bar
-- `Ctrl+N`: New note
-
-### Notes Storage
-
-Notes are stored locally in a SQLite database located in your home directory at:
-- Windows: `%USERPROFILE%\.note_typewriter\notes.db`
-- Linux/Mac: `~/.note_typewriter/notes.db`
-
-## Contributing
-
-Feel free to submit issues and enhancement requests! 
+- Ctrl+N: New note
+- Ctrl+S: Save note
+- Ctrl+F: Search notes
+- Ctrl+B: Bold text
+- Ctrl+I: Italic text
+- Ctrl+U: Underline text
+- Ctrl++: Increase font size
+- Ctrl+-: Decrease font size
+- Ctrl+P: Toggle preview
+- Ctrl+Shift+P: Full preview mode 
