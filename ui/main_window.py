@@ -1,11 +1,52 @@
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QListWidget, QTextEdit, QLineEdit,
                              QSplitter, QLabel, QListWidgetItem, QToolBar,
-                             QFontComboBox, QSpinBox, QComboBox)
+                             QFontComboBox, QSpinBox, QComboBox, QFrame,
+                             QMenu, QToolButton)
 from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import (QIcon, QFont, QKeySequence, QTextCharFormat,
-                        QColor, QTextCursor, QAction, QFontDatabase)
+                        QColor, QTextCursor, QAction, QFontDatabase,
+                        QTextListFormat, QTextBlockFormat)
 from .styles import *
+
+class RichTextEdit(QTextEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptRichText(True)
+        self.setTabStopDistance(20)
+        
+        # Set default font
+        font = QFont("Segoe UI", 11)
+        self.setFont(font)
+        
+        # Set line wrap mode
+        self.setLineWrapMode(QTextEdit.WidgetWidth)
+        
+        # Set default paragraph spacing and line height
+        block_format = QTextBlockFormat()
+        block_format.setLineHeight(150, 1)  # 150% line height, type 1 = ProportionalHeight
+        block_format.setTopMargin(8)
+        block_format.setBottomMargin(8)
+        
+        cursor = self.textCursor()
+        cursor.movePosition(QTextCursor.Start)
+        cursor.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
+        cursor.mergeBlockFormat(block_format)
+        self.setTextCursor(cursor)
+        
+        # Set as default format for new blocks
+        self.document().setDefaultTextOption(self.document().defaultTextOption())
+        self.setCurrentCharFormat(QTextCharFormat())
+
+class FormatToolButton(QToolButton):
+    def __init__(self, text, icon_text, tooltip, parent=None):
+        super().__init__(parent)
+        self.setText(icon_text)
+        self.setToolTip(tooltip)
+        self.setCheckable(True)
+        self.setAutoRaise(True)
+        self.setStyleSheet(TOOL_BUTTON_STYLE)
+        self.setFixedSize(32, 32)
 
 class MainWindow(QMainWindow):
     # Signals
@@ -41,11 +82,21 @@ class MainWindow(QMainWindow):
         search_shortcut.triggered.connect(lambda: self.search_bar.setFocus())
         self.addAction(search_shortcut)
 
-        # Toggle preview shortcut
-        preview_shortcut = QAction("Preview", self)
-        preview_shortcut.setShortcut(QKeySequence("Ctrl+P"))
-        preview_shortcut.triggered.connect(lambda: self.btn_toggle_preview.click())
-        self.addAction(preview_shortcut)
+        # Text formatting shortcuts
+        bold_shortcut = QAction("Bold", self)
+        bold_shortcut.setShortcut(QKeySequence.Bold)
+        bold_shortcut.triggered.connect(lambda: self.format_text('bold'))
+        self.addAction(bold_shortcut)
+
+        italic_shortcut = QAction("Italic", self)
+        italic_shortcut.setShortcut(QKeySequence.Italic)
+        italic_shortcut.triggered.connect(lambda: self.format_text('italic'))
+        self.addAction(italic_shortcut)
+
+        underline_shortcut = QAction("Underline", self)
+        underline_shortcut.setShortcut(QKeySequence.Underline)
+        underline_shortcut.triggered.connect(lambda: self.format_text('underline'))
+        self.addAction(underline_shortcut)
 
     def setup_ui(self):
         self.setStyleSheet(MAIN_WINDOW_STYLE)
@@ -66,12 +117,21 @@ class MainWindow(QMainWindow):
         left_layout.setSpacing(10)
         left_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Category selector
+        # Category selector with label
+        category_widget = QWidget()
+        category_layout = QHBoxLayout(category_widget)
+        category_layout.setContentsMargins(0, 0, 0, 0)
+        
+        category_label = QLabel("📂 Category:")
+        category_label.setStyleSheet(LABEL_STYLE)
         self.category_combo = QComboBox()
         self.category_combo.setStyleSheet(COMBOBOX_STYLE)
         self.category_combo.addItems(["All Notes", "Personal", "Work", "Ideas", "Tasks"])
         self.category_combo.currentTextChanged.connect(self.category_changed.emit)
-        left_layout.addWidget(self.category_combo)
+        
+        category_layout.addWidget(category_label)
+        category_layout.addWidget(self.category_combo)
+        left_layout.addWidget(category_widget)
         
         # Search bar with icon
         self.search_bar = QLineEdit()
@@ -94,7 +154,7 @@ class MainWindow(QMainWindow):
         right_layout.setSpacing(10)
         right_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Toolbar
+        # Main toolbar
         toolbar = QWidget()
         toolbar_layout = QHBoxLayout(toolbar)
         toolbar_layout.setContentsMargins(0, 0, 0, 0)
@@ -112,39 +172,101 @@ class MainWindow(QMainWindow):
             btn.setStyleSheet(BUTTON_STYLE)
             toolbar_layout.addWidget(btn)
         
-        # Formatting toolbar
-        format_toolbar = QWidget()
-        format_layout = QHBoxLayout(format_toolbar)
-        format_layout.setContentsMargins(0, 0, 0, 0)
-        format_layout.setSpacing(5)
+        toolbar_layout.addStretch()
         
-        # Font family
+        # Formatting toolbar
+        format_toolbar = QFrame()
+        format_toolbar.setStyleSheet(TOOLBAR_STYLE)
+        format_layout = QHBoxLayout(format_toolbar)
+        format_layout.setContentsMargins(10, 5, 10, 5)
+        format_layout.setSpacing(8)
+
+        # Style section
+        style_section = QFrame()
+        style_layout = QHBoxLayout(style_section)
+        style_layout.setContentsMargins(0, 0, 0, 0)
+        style_layout.setSpacing(4)
+
+        # Font controls
         self.font_family = QFontComboBox()
         self.font_family.setStyleSheet(COMBOBOX_STYLE)
-        self.font_family.currentFontChanged.connect(self.format_text)
+        self.font_family.currentFontChanged.connect(self.format_font)
+        self.font_family.setFixedWidth(180)
         
-        # Font size
         self.font_size = QSpinBox()
         self.font_size.setStyleSheet(SPINBOX_STYLE)
         self.font_size.setRange(8, 72)
         self.font_size.setValue(11)
-        self.font_size.valueChanged.connect(self.format_text)
+        self.font_size.valueChanged.connect(self.format_font)
+        self.font_size.setFixedWidth(70)
+
+        style_layout.addWidget(self.font_family)
+        style_layout.addWidget(self.font_size)
+        format_layout.addWidget(style_section)
+
+        # Add separator
+        separator = QFrame()
+        separator.setFrameShape(QFrame.VLine)
+        separator.setStyleSheet(SEPARATOR_STYLE)
+        format_layout.addWidget(separator)
+
+        # Text format section
+        format_section = QFrame()
+        format_layout_inner = QHBoxLayout(format_section)
+        format_layout_inner.setContentsMargins(0, 0, 0, 0)
+        format_layout_inner.setSpacing(4)
+
+        # Format buttons with better icons
+        self.btn_bold = FormatToolButton("Bold", "B", "Bold (Ctrl+B)")
+        self.btn_italic = FormatToolButton("Italic", "I", "Italic (Ctrl+I)")
+        self.btn_underline = FormatToolButton("Underline", "U", "Underline (Ctrl+U)")
         
-        # Format buttons
-        self.btn_bold = QPushButton("B")
-        self.btn_italic = QPushButton("I")
-        self.btn_underline = QPushButton("U")
-        self.btn_color = QPushButton("🎨")
+        # Text alignment buttons
+        self.btn_align_left = FormatToolButton("Left", "⫷", "Align Left")
+        self.btn_align_center = FormatToolButton("Center", "⟺", "Center")
+        self.btn_align_right = FormatToolButton("Right", "⫸", "Align Right")
         
-        for btn in [self.btn_bold, self.btn_italic, self.btn_underline, self.btn_color]:
-            btn.setStyleSheet(TOOL_BUTTON_STYLE)
-            btn.setFixedSize(30, 30)
-            format_layout.addWidget(btn)
+        # List buttons
+        self.btn_bullet_list = FormatToolButton("Bullet List", "•", "Bullet List")
+        self.btn_number_list = FormatToolButton("Number List", "1.", "Number List")
+
+        # Add all format buttons
+        for btn in [self.btn_bold, self.btn_italic, self.btn_underline]:
+            format_layout_inner.addWidget(btn)
         
-        format_layout.addWidget(self.font_family)
-        format_layout.addWidget(self.font_size)
+        # Add separator
+        separator2 = QFrame()
+        separator2.setFrameShape(QFrame.VLine)
+        separator2.setStyleSheet(SEPARATOR_STYLE)
+        format_layout_inner.addWidget(separator2)
+
+        # Add alignment buttons
+        for btn in [self.btn_align_left, self.btn_align_center, self.btn_align_right]:
+            format_layout_inner.addWidget(btn)
+
+        # Add separator
+        separator3 = QFrame()
+        separator3.setFrameShape(QFrame.VLine)
+        separator3.setStyleSheet(SEPARATOR_STYLE)
+        format_layout_inner.addWidget(separator3)
+
+        # Add list buttons
+        for btn in [self.btn_bullet_list, self.btn_number_list]:
+            format_layout_inner.addWidget(btn)
+
+        format_layout.addWidget(format_section)
         format_layout.addStretch()
-        
+
+        # Connect format buttons
+        self.btn_bold.clicked.connect(lambda: self.format_text('bold'))
+        self.btn_italic.clicked.connect(lambda: self.format_text('italic'))
+        self.btn_underline.clicked.connect(lambda: self.format_text('underline'))
+        self.btn_align_left.clicked.connect(lambda: self.align_text('left'))
+        self.btn_align_center.clicked.connect(lambda: self.align_text('center'))
+        self.btn_align_right.clicked.connect(lambda: self.align_text('right'))
+        self.btn_bullet_list.clicked.connect(lambda: self.make_list('bullet'))
+        self.btn_number_list.clicked.connect(lambda: self.make_list('number'))
+
         # Tags
         tags_widget = QWidget()
         tags_layout = QHBoxLayout(tags_widget)
@@ -158,18 +280,14 @@ class MainWindow(QMainWindow):
         tags_layout.addWidget(self.tags_label)
         tags_layout.addWidget(self.tags_input)
         
-        # Add all toolbars to right layout
-        right_layout.addWidget(toolbar)
-        right_layout.addWidget(format_toolbar)
-        
         # Editor and metadata
         self.metadata_label = QLabel()
         self.metadata_label.setStyleSheet(METADATA_STYLE)
-        right_layout.addWidget(self.metadata_label)
         
-        # Text editor
-        self.editor = QTextEdit()
+        # Text editor (using custom RichTextEdit)
+        self.editor = RichTextEdit()
         self.editor.setStyleSheet(EDITOR_STYLE)
+        self.editor.textChanged.connect(self.handle_text_change)
         
         # Preview widget
         self.preview = QTextEdit()
@@ -177,7 +295,11 @@ class MainWindow(QMainWindow):
         self.preview.setStyleSheet(EDITOR_STYLE)
         self.preview.hide()
         
+        # Add all widgets to right layout
+        right_layout.addWidget(toolbar)
+        right_layout.addWidget(format_toolbar)
         right_layout.addWidget(tags_widget)
+        right_layout.addWidget(self.metadata_label)
         right_layout.addWidget(self.editor)
         right_layout.addWidget(self.preview)
         
@@ -188,12 +310,104 @@ class MainWindow(QMainWindow):
         
         layout.addWidget(self.splitter)
 
-    def format_text(self):
+    def format_text(self, format_type):
+        cursor = self.editor.textCursor()
         fmt = QTextCharFormat()
+        
+        if format_type == 'bold':
+            fmt.setFontWeight(QFont.Bold if not cursor.charFormat().fontWeight() == QFont.Bold else QFont.Normal)
+        elif format_type == 'italic':
+            fmt.setFontItalic(not cursor.charFormat().fontItalic())
+        elif format_type == 'underline':
+            fmt.setFontUnderline(not cursor.charFormat().fontUnderline())
+        
+        cursor.mergeCharFormat(fmt)
+        self.editor.mergeCurrentCharFormat(fmt)
+        self.editor.setFocus()
+
+    def align_text(self, alignment):
+        cursor = self.editor.textCursor()
+        block_fmt = cursor.blockFormat()
+        
+        if alignment == 'left':
+            block_fmt.setAlignment(Qt.AlignLeft)
+            self.btn_align_left.setChecked(True)
+            self.btn_align_center.setChecked(False)
+            self.btn_align_right.setChecked(False)
+        elif alignment == 'center':
+            block_fmt.setAlignment(Qt.AlignCenter)
+            self.btn_align_left.setChecked(False)
+            self.btn_align_center.setChecked(True)
+            self.btn_align_right.setChecked(False)
+        elif alignment == 'right':
+            block_fmt.setAlignment(Qt.AlignRight)
+            self.btn_align_left.setChecked(False)
+            self.btn_align_center.setChecked(False)
+            self.btn_align_right.setChecked(True)
+        
+        cursor.mergeBlockFormat(block_fmt)
+        self.editor.setFocus()
+
+    def make_list(self, list_type):
+        cursor = self.editor.textCursor()
+        list_fmt = QTextListFormat()
+        
+        if list_type == 'bullet':
+            list_fmt.setStyle(QTextListFormat.ListDisc)
+            self.btn_bullet_list.setChecked(not self.btn_bullet_list.isChecked())
+            self.btn_number_list.setChecked(False)
+        else:
+            list_fmt.setStyle(QTextListFormat.ListDecimal)
+            self.btn_number_list.setChecked(not self.btn_number_list.isChecked())
+            self.btn_bullet_list.setChecked(False)
+        
+        cursor.createList(list_fmt)
+        self.editor.setFocus()
+
+    def handle_text_change(self):
+        cursor = self.editor.textCursor()
+        fmt = cursor.charFormat()
+        block_fmt = cursor.blockFormat()
+        
+        # Update format buttons state
+        self.btn_bold.setChecked(fmt.fontWeight() == QFont.Bold)
+        self.btn_italic.setChecked(fmt.fontItalic())
+        self.btn_underline.setChecked(fmt.fontUnderline())
+        
+        # Update alignment buttons
+        alignment = block_fmt.alignment()
+        self.btn_align_left.setChecked(alignment == Qt.AlignLeft)
+        self.btn_align_center.setChecked(alignment == Qt.AlignCenter)
+        self.btn_align_right.setChecked(alignment == Qt.AlignRight)
+        
+        # Update list buttons
+        current_list = cursor.currentList()
+        if current_list:
+            list_fmt = current_list.format()
+            self.btn_bullet_list.setChecked(list_fmt.style() == QTextListFormat.ListDisc)
+            self.btn_number_list.setChecked(list_fmt.style() == QTextListFormat.ListDecimal)
+        else:
+            self.btn_bullet_list.setChecked(False)
+            self.btn_number_list.setChecked(False)
+        
+        # Update font controls
+        if fmt.fontPointSize() > 0:
+            self.font_size.setValue(int(fmt.fontPointSize()))
+        self.font_family.setCurrentFont(fmt.font())
+
+    def format_font(self):
+        cursor = self.editor.textCursor()
+        fmt = cursor.charFormat()
         fmt.setFont(self.font_family.currentFont())
         fmt.setFontPointSize(self.font_size.value())
-        self.editor.textCursor().mergeCharFormat(fmt)
-    
+        
+        if cursor.hasSelection():
+            cursor.mergeCharFormat(fmt)
+        else:
+            self.editor.setCurrentCharFormat(fmt)
+        
+        self.editor.setFocus()
+
     def refresh_note_list(self, notes):
         self.note_list.clear()
         for note in notes:

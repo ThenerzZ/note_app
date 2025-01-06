@@ -25,12 +25,6 @@ class NoteTypewriter:
         self.window.btn_toggle_preview.clicked.connect(self.toggle_preview)
         self.window.btn_export.clicked.connect(self.export_note)
         
-        # Connect formatting signals
-        self.window.btn_bold.clicked.connect(lambda: self.format_text('bold'))
-        self.window.btn_italic.clicked.connect(lambda: self.format_text('italic'))
-        self.window.btn_underline.clicked.connect(lambda: self.format_text('underline'))
-        self.window.btn_color.clicked.connect(self.choose_color)
-        
         # Set up auto-save timer
         self.auto_save_timer = QTimer()
         self.auto_save_timer.timeout.connect(self.auto_save)
@@ -122,34 +116,6 @@ class NoteTypewriter:
         content = self.window.get_note_content()
         html = markdown.markdown(content)
         self.window.toggle_preview(html)
-    
-    def format_text(self, format_type):
-        cursor = self.window.editor.textCursor()
-        char_format = cursor.charFormat()
-        
-        if format_type == 'bold':
-            char_format.setFontWeight(
-                700 if not char_format.fontWeight() == 700 else 400
-            )
-        elif format_type == 'italic':
-            char_format.setFontItalic(not char_format.fontItalic())
-        elif format_type == 'underline':
-            char_format.setFontUnderline(not char_format.fontUnderline())
-        
-        cursor.mergeCharFormat(char_format)
-        self.window.editor.setTextCursor(cursor)
-    
-    def choose_color(self):
-        color = QColorDialog.getColor(
-            initial=QColor('white'),
-            parent=self.window,
-            title="Choose Text Color"
-        )
-        if color.isValid():
-            cursor = self.window.editor.textCursor()
-            fmt = cursor.charFormat()
-            fmt.setForeground(color)
-            cursor.mergeCharFormat(fmt)
     
     def export_note(self):
         if not self.current_note:
