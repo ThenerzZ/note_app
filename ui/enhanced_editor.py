@@ -230,3 +230,8 @@ class EnhancedEditor(QWidget):
             if file_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
                 self.insert_image(file_path)
                 break 
+    
+    def insert_checkbox(self):
+        cursor = self.editor.textCursor()
+        cursor.insertText("- [ ] ")
+        self.editor.setFocus() 

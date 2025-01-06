@@ -571,10 +571,6 @@ class MainWindow(QMainWindow):
         
         menu.exec_(self.btn_insert_code.mapToGlobal(self.btn_insert_code.rect().bottomLeft()))
     
-    def insert_checkbox(self):
-        cursor = self.editor.textCursor()
-        cursor.insertText("- [ ] ")
-    
     def insert_image(self):
         self.editor_widget.insert_image()
     
