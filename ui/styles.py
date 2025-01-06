@@ -10,7 +10,8 @@ COLORS = {
     'text_light': '#ffffff',
     'text_dark': '#e0e0e0',
     'border_light': '#2d2d2d',
-    'hover_dark': '#252525'
+    'hover_dark': '#252525',
+    'metadata_text': '#888888'
 }
 
 # Main window style
@@ -82,6 +83,26 @@ BUTTON_STYLE = f"""
     }}
 """
 
+# Tool button style (for formatting toolbar)
+TOOL_BUTTON_STYLE = f"""
+    QPushButton {{
+        padding: 5px;
+        border: 1px solid {COLORS['border_light']};
+        border-radius: 4px;
+        background-color: {COLORS['background_darker']};
+        color: {COLORS['text_light']};
+        font-weight: bold;
+    }}
+    QPushButton:hover {{
+        background-color: {COLORS['hover_dark']};
+        border-color: {COLORS['pink_primary']};
+    }}
+    QPushButton:checked {{
+        background-color: {COLORS['pink_dark']};
+        border-color: {COLORS['pink_primary']};
+    }}
+"""
+
 # Editor style
 EDITOR_STYLE = f"""
     QTextEdit {{
@@ -127,5 +148,71 @@ SPLITTER_STYLE = f"""
     }}
     QSplitter::handle:hover {{
         background-color: {COLORS['pink_primary']};
+    }}
+"""
+
+# Combobox style
+COMBOBOX_STYLE = f"""
+    QComboBox {{
+        padding: 8px;
+        border: 2px solid {COLORS['border_light']};
+        border-radius: 6px;
+        background-color: {COLORS['background_darker']};
+        color: {COLORS['text_light']};
+        min-width: 150px;
+    }}
+    QComboBox:hover {{
+        border-color: {COLORS['pink_primary']};
+    }}
+    QComboBox::drop-down {{
+        border: none;
+        width: 20px;
+    }}
+    QComboBox::down-arrow {{
+        image: none;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid {COLORS['text_light']};
+        margin-right: 8px;
+    }}
+    QComboBox QAbstractItemView {{
+        background-color: {COLORS['background_darker']};
+        border: 2px solid {COLORS['border_light']};
+        border-radius: 6px;
+        selection-background-color: {COLORS['pink_dark']};
+        selection-color: {COLORS['text_light']};
+    }}
+"""
+
+# Spinbox style
+SPINBOX_STYLE = f"""
+    QSpinBox {{
+        padding: 8px;
+        border: 2px solid {COLORS['border_light']};
+        border-radius: 6px;
+        background-color: {COLORS['background_darker']};
+        color: {COLORS['text_light']};
+        min-width: 80px;
+    }}
+    QSpinBox:hover {{
+        border-color: {COLORS['pink_primary']};
+    }}
+    QSpinBox::up-button, QSpinBox::down-button {{
+        border: none;
+        background: {COLORS['background_dark']};
+        border-radius: 3px;
+        margin: 1px;
+    }}
+    QSpinBox::up-button:hover, QSpinBox::down-button:hover {{
+        background: {COLORS['pink_dark']};
+    }}
+"""
+
+# Metadata style
+METADATA_STYLE = f"""
+    QLabel {{
+        color: {COLORS['metadata_text']};
+        font-size: 9pt;
+        padding: 5px;
     }}
 """ 
